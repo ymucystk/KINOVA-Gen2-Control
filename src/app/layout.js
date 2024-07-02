@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "robot-arm-control",
+  title: "KINOVA Gen2 Control",
 };
 
 export default function RootLayout({ children }) {
