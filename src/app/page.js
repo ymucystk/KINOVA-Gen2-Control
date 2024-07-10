@@ -6,19 +6,199 @@ export default function Home() {
   const [rendered,set_rendered] = React.useState(false)
   const robotNameList = ["KINOVA Gen2"]
   const [robotName,set_robotName] = React.useState(robotNameList[0])
-  const [j1_rotate,set_j1_rotate] = React.useState(0)
-  const [j2_rotate,set_j2_rotate] = React.useState(0)
-  const [j3_rotate,set_j3_rotate] = React.useState(0)
-  const [j4_rotate,set_j4_rotate] = React.useState(0)
-  const [j5_rotate,set_j5_rotate] = React.useState(0)
-  const [j6_rotate,set_j6_rotate] = React.useState(0)
-  const [c_pos_x,set_c_pos_x] = React.useState(0)
-  const [c_pos_y,set_c_pos_y] = React.useState(0.5)
-  const [c_pos_z,set_c_pos_z] = React.useState(1.2)
-  const [c_deg_x,set_c_deg_x] = React.useState(0)
-  const [c_deg_y,set_c_deg_y] = React.useState(0)
-  const [c_deg_z,set_c_deg_z] = React.useState(0)
+  const [rotate,set_rotate] = React.useState({j1:0,j2:0,j3:0,j4:0,j5:0,j6:0})
+  const [c_pos,set_c_pos] = React.useState({x:0,y:0.5,z:1.2})
+  const [c_deg,set_c_deg] = React.useState({x:0,y:0,z:0})
+  const [source,set_source] = React.useState({x:0,y:0,z:0})
+  const [target,set_target] = React.useState({x:0,y:1.4,z:0})
+  const [joint_length,set_joint_length] = React.useState([])
+  const [nodes,set_nodes] = React.useState([])
+  const [node1,set_node1] = React.useState({x:0,y:0,z:0})
+  const [box_scale,set_box_scale] = React.useState("0.05 0.05 0.05")
   let registered = false
+
+  const joint_pos = {
+    base:{x:0,y:0,z:0},j1:{x:0,y:0,z:0},
+    j2:{x:0,y:0.2755,z:0},j3:{x:0,y:0.41,z:0},j4:{x:0.00974,y:0.2075,z:0},
+    j5:{x:0.00026,y:0.1035,z:0},j6:{x:-0.00025,y:0.104,z:0},
+    j7:{x:0,y:0.1145,z:0},j8:{x:0,y:0.05,z:0}
+  }
+
+  const distance = (s_pos, t_pos)=>{
+    return Math.sqrt((t_pos.x - s_pos.x) ** 2 + (t_pos.y - s_pos.y) ** 2 + (t_pos.z - s_pos.z) ** 2);
+  }
+
+  const pos_add = (pos1, pos2)=>{
+    return {x:(pos1.x + pos2.x), y:(pos1.y + pos2.y), z:(pos1.z + pos2.z)}
+  }
+
+  const getPoint  = (t,s,l)=>{
+    const p = {x:0,y:0,z:0}
+    const d = distance(s,t)
+
+    const dx = (t.x-s.x)/d
+    const dy = (t.y-s.y)/d
+    const dz = (t.z-s.z)/d
+
+    p.x = Math.round((t.x - dx*l)*10000)/10000
+    p.y = Math.round((t.y - dy*l)*10000)/10000
+    p.z = Math.round((t.z - dz*l)*10000)/10000
+
+    return p
+  }
+
+  const FABRIK = (st,tg,nd)=>{
+    const wknd = [...nd]
+    //const wknd = nd.map(()=>({x:0,y:0,z:0}))
+    const len = wknd.length - 1
+    for(let i=0;i<50;i++){
+      wknd[len].x = tg.x
+      wknd[len].y = tg.y
+      wknd[len].z = tg.z
+      for(let j=1;j<=len;j++){
+        wknd[len-j] = getPoint(wknd[len-j+1],wknd[len-j],joint_length[len-j]);
+      }
+
+      wknd[0].x = st.x
+      wknd[0].y = st.y
+      wknd[0].z = st.z
+      for(let j=1;j<=len;j++){
+        wknd[j] = getPoint(wknd[j-1],wknd[j],joint_length[j-1]);
+      }
+    }
+    set_nodes([...wknd])
+  }
+
+  React.useEffect(() => {
+    const setNode = []
+    setNode.push(pos_add(joint_pos.j1, joint_pos.j2))
+    setNode.push(pos_add(setNode[0], joint_pos.j3))
+    setNode.push(pos_add(pos_add(setNode[1], joint_pos.j4), joint_pos.j5))
+    setNode.push(pos_add(pos_add(pos_add(setNode[2], joint_pos.j6), joint_pos.j7), joint_pos.j8))
+    set_nodes(setNode)
+
+
+    set_source(setNode[0])
+
+    set_joint_length([
+      distance(setNode[0],setNode[1]),
+      distance(setNode[1],setNode[2]),
+      distance(setNode[2],setNode[3]),
+      0,
+    ])
+  },[])
+
+  React.useEffect(() => {
+    if(nodes.length > 0){
+      FABRIK(source,target,nodes)
+    }
+  },[target])
+
+  const triangle_degree = (s_pos, t_pos, side_a, side_b)=>{
+    const side_c = distance(s_pos, t_pos)
+    const diff_x = (t_pos.x + 10) - (s_pos.x + 10)
+    const diff_y = (t_pos.y + 10) - (s_pos.y + 10)
+    const diff_z = (t_pos.z + 10) - (s_pos.z + 10)
+    let angle_base = Math.atan2(Math.sqrt(side_c ** 2 - diff_y ** 2), diff_y)*180/Math.PI
+    let direction = Math.atan2(diff_x, diff_z)*180/Math.PI
+    if(isNaN(angle_base)) angle_base = 0
+    if(isNaN(direction)) direction = 0
+
+    let angle_B = Math.acos((side_a ** 2 + side_c ** 2 - side_b ** 2) / (2 * side_a * side_c))*180/Math.PI
+    let angle_C = Math.acos((side_a ** 2 + side_b ** 2 - side_c ** 2) / (2 * side_a * side_b))*180/Math.PI
+
+    if(isNaN(angle_B)) angle_B = 0
+    if(isNaN(angle_C)) angle_C = 0
+
+    const angle1 = angle_base - angle_B
+    const angle2 = angle_C === 0 ? 0 : 180 - angle_C
+
+    return {direction, angle_base, angle1, angle2}
+  }
+
+  const degree = (s_pos, t_pos)=>{
+    const len = distance(s_pos, t_pos)
+    const diff_x = (t_pos.x + 10) - (s_pos.x + 10)
+    const diff_y = (t_pos.y + 10) - (s_pos.y + 10)
+    const diff_z = (t_pos.z + 10) - (s_pos.z + 10)
+
+    let degree_x = Math.atan2(Math.sqrt(len ** 2 - diff_y ** 2), diff_y)*180/Math.PI
+    let degree_y = Math.atan2(diff_x, diff_z)*180/Math.PI
+
+    if(isNaN(degree_x)) degree_x = 0
+    if(isNaN(degree_y)) degree_y = 0
+
+    return {x:degree_x,y:degree_y}
+  }
+
+  const calc_side = (syahen, kakudo)=>{
+    const teihen = Math.abs(kakudo)===90  ? 0:(syahen * Math.cos(kakudo/180*Math.PI))
+    const takasa = Math.abs(kakudo)===180 ? 0:(syahen * Math.sin(kakudo/180*Math.PI))
+    return {a:teihen, b:takasa}
+  }
+
+  React.useEffect(() => {
+    if(nodes.length > 0){
+      const wkrotate = {...rotate}
+      const deg1 = triangle_degree(nodes[0],nodes[2],joint_length[0],joint_length[1])
+      wkrotate.j1 = deg1.direction
+      wkrotate.j2 = deg1.angle1
+      wkrotate.j3 = deg1.angle2
+
+      const {a:node1y, b:node1t} = calc_side(joint_length[0],deg1.angle1)
+      const node1x = Math.abs(deg1.direction)===180 ? 0:(node1t * Math.sin(deg1.direction/180*Math.PI))
+      const node1z = Math.abs(deg1.direction)===90  ? 0:(node1t * Math.cos(deg1.direction/180*Math.PI))
+      const node1pos = pos_add(joint_pos.j2,{x:node1x, y:node1y, z:node1z})
+      //set_node1(node1pos)
+
+      const side_a = distance(node1pos,nodes[2])
+      const side_b = distance(nodes[2],nodes[3])
+      const side_c = distance(node1pos,nodes[3])
+
+      let angle_A = Math.acos((side_b ** 2 + side_c ** 2 - side_a ** 2) / (2 * side_b * side_c))*180/Math.PI
+      let angle_B = Math.acos((side_a ** 2 + side_c ** 2 - side_b ** 2) / (2 * side_a * side_c))*180/Math.PI
+      let angle_C = Math.acos((side_a ** 2 + side_b ** 2 - side_c ** 2) / (2 * side_a * side_b))*180/Math.PI
+      if(isNaN(angle_A)){
+        console.log(`angle_C ${angle_A}`)
+        angle_A = 180
+      }
+      if(isNaN(angle_B)){
+        console.log(`angle_B ${angle_B}`)
+        angle_B = 180
+      }
+      if(isNaN(angle_C)){
+        console.log(`angle_C ${angle_C}`)
+        angle_C = 180
+      }
+
+      const angle = 180 - angle_C
+      wkrotate.j5 = angle * -1
+
+      const {x:degree_x,y:degree_y} = degree(node1pos,nodes[2])
+
+      const {a:a1, b:b1} = calc_side(side_c,(degree_x + angle_B))
+      const pos1x = b1 * Math.sin(degree_y/180*Math.PI)
+      const pos1z = b1 * Math.cos(degree_y/180*Math.PI)
+      const pos1pos = pos_add(node1pos,{x:pos1x, y:a1, z:pos1z})
+
+      const {a:a2, b:b2} = calc_side(side_c,angle_B)
+      //const {a:a2, b:b2} = calc_side(a1,degree_y)
+      const pos2x = a2 * Math.sin(degree_y/180*Math.PI)
+      const pos2z = a2 * Math.cos(degree_y/180*Math.PI)
+      const pos2pos = pos_add(node1pos,{x:pos2x, y:0, z:pos2z})
+
+      set_node1(pos1pos)
+
+      console.log(`degree_x:${degree_x} degree_y:${degree_y} angle_B:${angle_B}`)
+      //console.log({node1pos})
+      //console.log({pos1pos})
+
+      //console.log(`a:${a1} b:${b1}`)
+      //wkrotate.j4 = (deg2.y * -1) + deg1.direction
+
+      set_rotate({...wkrotate})
+    }
+  },[nodes])
 
   const robotChange = ()=>{
     const get = (robotName)=>{
@@ -53,24 +233,27 @@ export default function Home() {
 
   const controllerProps = {
     robotName, robotNameList, set_robotName,
-    j1_rotate,set_j1_rotate,j2_rotate,set_j2_rotate,j3_rotate,set_j3_rotate,
-    j4_rotate,set_j4_rotate,j5_rotate,set_j5_rotate,j6_rotate,set_j6_rotate,
+    rotate, set_rotate, target, set_target
   }
 
   const robotProps = {
-    robotNameList, robotName, j1_rotate, j2_rotate, j3_rotate, j4_rotate, j5_rotate, j6_rotate
+    robotNameList, robotName, rotate, joint_pos
   }
 
   if(rendered){
     return (
     <>
       <a-scene>
+        <a-sky color="#E2F4FF"></a-sky>
+        <Abox nodes={nodes} box_scale={box_scale}/>
+        <a-box position={`${node1.x} ${node1.y} ${node1.z}`} scale={box_scale} color="red"></a-box>
         <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#7BC8A4" shadow></a-plane>
         <Assets/>
         <Select_Robot {...robotProps}/>
-        <a-entity id="rig" position={`${c_pos_x} ${c_pos_y} ${c_pos_z}`} rotation={`${c_deg_x} ${c_deg_y} ${c_deg_z}`}>
+        <a-entity id="rig" position={`${c_pos.x} ${c_pos.y} ${c_pos.z}`} rotation={`${c_deg.x} ${c_deg.y} ${c_deg.z}`}>
           <a-camera id="camera" cursor="rayOrigin: mouse;" position="0 0 0"></a-camera>
         </a-entity>
+        <a-sphere position={`${target.x} ${target.y} ${target.z}`} scale="0.03 0.03 0.03" color="yellow"></a-sphere>
       </a-scene>
       <Controller {...controllerProps}/>
     </>
@@ -81,6 +264,16 @@ export default function Home() {
         <Assets/>
       </a-scene>
     )
+  }
+}
+
+const Abox = (props)=>{
+  const {nodes,box_scale} = props
+  const coltbl = ["red","green","blue","yellow"]
+  if(nodes.length > 0){
+    return nodes.map((node,idx)=><a-box key={idx} position={`${node.x} ${node.y} ${node.z}`} scale="0.01 0.01 0.01" color={coltbl[idx]}></a-box>)
+  }else{
+    return null
   }
 }
 
@@ -102,15 +295,15 @@ const Assets = ()=>{
 }
 
 const KINOVA_Gen2 = (props)=>{
-  const {visible, j1_rotate, j2_rotate, j3_rotate, j4_rotate, j5_rotate, j6_rotate} = props
+  const {visible, rotate, joint_pos} = props
   return (<>{visible?
-    <a-entity robot-click gltf-model="#KINOVA_BASE" position="0 0 0" rotation="0 0 0" visible={visible}>
-      <a-entity gltf-model="#KINOVA_J1" position="0 0 0" rotation={`0 ${j1_rotate} 0`}>
-        <a-entity gltf-model="#KINOVA_J2" position="0 0.2755 0" rotation={`${-j2_rotate} 0 0`}>
-          <a-entity gltf-model="#KINOVA_J3" position="0 0.41 0" rotation={`${-j3_rotate} 0 0`}>
-            <a-entity gltf-model="#KINOVA_J4" position="0.00974 0.2075 0" rotation={`0 ${j4_rotate} 0`}>
-              <a-entity gltf-model="#KINOVA_J5" position="0.00026 0.1035 0" rotation={`${-j5_rotate} 0 0`}>
-                <a-entity gltf-model="#KINOVA_J6" position="-0.00025 0.104 0" rotation={`0 ${j6_rotate} 0`}>
+    <a-entity robot-click gltf-model="#KINOVA_BASE" position={`${joint_pos.base.x} ${joint_pos.base.y} ${joint_pos.base.z}`} rotation="0 0 0" visible={visible}>
+      <a-entity gltf-model="#KINOVA_J1" position={`${joint_pos.j1.x} ${joint_pos.j1.y} ${joint_pos.j1.z}`} rotation={`0 ${rotate.j1} 0`}>
+        <a-entity gltf-model="#KINOVA_J2" position={`${joint_pos.j2.x} ${joint_pos.j2.y} ${joint_pos.j2.z}`} rotation={`${rotate.j2} 0 0`}>
+          <a-entity gltf-model="#KINOVA_J3" position={`${joint_pos.j3.x} ${joint_pos.j3.y} ${joint_pos.j3.z}`} rotation={`${rotate.j3} 0 0`}>
+            <a-entity gltf-model="#KINOVA_J4" position={`${joint_pos.j4.x} ${joint_pos.j4.y} ${joint_pos.j4.z}`} rotation={`0 ${rotate.j4} 0`}>
+              <a-entity gltf-model="#KINOVA_J5" position={`${joint_pos.j5.x} ${joint_pos.j5.y} ${joint_pos.j5.z}`} rotation={`${rotate.j5} 0 0`}>
+                <a-entity gltf-model="#KINOVA_J6" position={`${joint_pos.j6.x} ${joint_pos.j6.y} ${joint_pos.j6.z}`} rotation={`0 ${rotate.j6} 0`}>
                   <a-entity gltf-model="#KINOVA_finger1" position="-0.03 0.1145 0.003" rotation="8 -10 0" animation="property: rotation; from: 8 -10 0; to: 8 -10 -40; loop: true; dur:1000; easing:linear"></a-entity>
                   <a-entity gltf-model="#KINOVA_finger2" position="0.025 0.1145 -0.023" rotation="-1 7 0" animation="property: rotation; from: -1 7 0; to: -1 7 40; loop: true; dur:1000; easing:linear"></a-entity>
                   <a-entity gltf-model="#KINOVA_finger2" position="0.025 0.1145 0.022" rotation="2 -15 0" animation="property: rotation; from: 2 -15 0; to: 2 -15 40; loop: true; dur:1000; easing:linear"></a-entity>
