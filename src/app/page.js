@@ -14,7 +14,9 @@ export default function Home() {
   const [joint_length,set_joint_length] = React.useState([])
   const [nodes,set_nodes] = React.useState([])
   const [node1,set_node1] = React.useState({x:0,y:0,z:0})
-  const [box_scale,set_box_scale] = React.useState("0.05 0.05 0.05")
+  const [node2,set_node2] = React.useState({x:0,y:0,z:0})
+  const [box_scale,set_box_scale] = React.useState("0.03 0.03 0.03")
+  const [box_visible,set_box_visible] = React.useState(true)
   let registered = false
 
   const joint_pos = {
@@ -30,6 +32,10 @@ export default function Home() {
 
   const pos_add = (pos1, pos2)=>{
     return {x:(pos1.x + pos2.x), y:(pos1.y + pos2.y), z:(pos1.z + pos2.z)}
+  }
+
+  const pos_sub = (pos1, pos2)=>{
+    return {x:(pos1.x - pos2.x), y:(pos1.y - pos2.y), z:(pos1.z - pos2.z)}
   }
 
   const getPoint  = (t,s,l)=>{
@@ -51,7 +57,7 @@ export default function Home() {
     const wknd = [...nd]
     //const wknd = nd.map(()=>({x:0,y:0,z:0}))
     const len = wknd.length - 1
-    for(let i=0;i<50;i++){
+    for(let i=0;i<25;i++){
       wknd[len].x = tg.x
       wknd[len].y = tg.y
       wknd[len].z = tg.z
@@ -94,7 +100,7 @@ export default function Home() {
     }
   },[target])
 
-  const triangle_degree = (s_pos, t_pos, side_a, side_b)=>{
+  const degree_base = (s_pos, t_pos, side_a, side_b)=>{
     const side_c = distance(s_pos, t_pos)
     const diff_x = (t_pos.x + 10) - (s_pos.x + 10)
     const diff_y = (t_pos.y + 10) - (s_pos.y + 10)
@@ -131,70 +137,52 @@ export default function Home() {
     return {x:degree_x,y:degree_y}
   }
 
-  const calc_side = (syahen, kakudo)=>{
+  const calc_side_1 = (syahen, kakudo)=>{
     const teihen = Math.abs(kakudo)===90  ? 0:(syahen * Math.cos(kakudo/180*Math.PI))
     const takasa = Math.abs(kakudo)===180 ? 0:(syahen * Math.sin(kakudo/180*Math.PI))
     return {a:teihen, b:takasa}
   }
 
+  const calc_side_2 = (teihen, takasa)=>{
+    const syahen = Math.sqrt(teihen ** 2 + takasa ** 2)
+    const kakudo = Math.atan2(teihen, takasa)*180/Math.PI
+    return {s:syahen, k:kakudo}
+  }
+
   React.useEffect(() => {
     if(nodes.length > 0){
       const wkrotate = {...rotate}
-      const deg1 = triangle_degree(nodes[0],nodes[2],joint_length[0],joint_length[1])
+      const deg1 = degree_base(nodes[0],nodes[2],joint_length[0],joint_length[1])
       wkrotate.j1 = deg1.direction
       wkrotate.j2 = deg1.angle1
       wkrotate.j3 = deg1.angle2
 
-      const {a:node1y, b:node1t} = calc_side(joint_length[0],deg1.angle1)
-      const node1x = Math.abs(deg1.direction)===180 ? 0:(node1t * Math.sin(deg1.direction/180*Math.PI))
-      const node1z = Math.abs(deg1.direction)===90  ? 0:(node1t * Math.cos(deg1.direction/180*Math.PI))
+      const {a:node1y, b:node1r} = calc_side_1(joint_length[0],deg1.angle1)
+      const node1x = Math.abs(deg1.direction)===180 ? 0:(node1r * Math.sin(deg1.direction/180*Math.PI))
+      const node1z = Math.abs(deg1.direction)===90  ? 0:(node1r * Math.cos(deg1.direction/180*Math.PI))
       const node1pos = pos_add(joint_pos.j2,{x:node1x, y:node1y, z:node1z})
-      //set_node1(node1pos)
 
-      const side_a = distance(node1pos,nodes[2])
-      const side_b = distance(nodes[2],nodes[3])
-      const side_c = distance(node1pos,nodes[3])
+      const second_base_pos = nodes[2]
+      const {x:degree_x,y:degree_y} = degree(node1pos,second_base_pos)
+      const relativepos = pos_sub(nodes[3],second_base_pos)
+      const {s:hankei, k:kakudo} = calc_side_2(relativepos.x,relativepos.z)
+      const relativedeg = kakudo - deg1.direction
+      const wkpos1x = hankei * Math.sin(relativedeg/180*Math.PI)
+      const wkpos1z = hankei * Math.cos(relativedeg/180*Math.PI)
+      const wkpos1 = {x:wkpos1x,y:relativepos.y,z:wkpos1z}
 
-      let angle_A = Math.acos((side_b ** 2 + side_c ** 2 - side_a ** 2) / (2 * side_b * side_c))*180/Math.PI
-      let angle_B = Math.acos((side_a ** 2 + side_c ** 2 - side_b ** 2) / (2 * side_a * side_c))*180/Math.PI
-      let angle_C = Math.acos((side_a ** 2 + side_b ** 2 - side_c ** 2) / (2 * side_a * side_b))*180/Math.PI
-      if(isNaN(angle_A)){
-        console.log(`angle_C ${angle_A}`)
-        angle_A = 180
-      }
-      if(isNaN(angle_B)){
-        console.log(`angle_B ${angle_B}`)
-        angle_B = 180
-      }
-      if(isNaN(angle_C)){
-        console.log(`angle_C ${angle_C}`)
-        angle_C = 180
-      }
+      const {s:hankei2, k:kakudo2} = calc_side_2(wkpos1z,relativepos.y)
+      const relativedeg2 = kakudo2 - degree_x
+      const wkpos2z = hankei2 * Math.sin(relativedeg2/180*Math.PI)
+      const wkpos2y = hankei2 * Math.cos(relativedeg2/180*Math.PI)
 
-      const angle = 180 - angle_C
-      wkrotate.j5 = angle * -1
+      const wkpos2 = {x:wkpos1x,y:wkpos2y,z:wkpos2z}
+      const {x:wkpos1_deg_x,y:wkpos1_deg_y} = degree({x:0,y:0,z:0},wkpos2)
+      set_node1(pos_add(second_base_pos,wkpos1))
+      set_node2(pos_add(second_base_pos,wkpos2))
 
-      const {x:degree_x,y:degree_y} = degree(node1pos,nodes[2])
-
-      const {a:a1, b:b1} = calc_side(side_c,(degree_x + angle_B))
-      const pos1x = b1 * Math.sin(degree_y/180*Math.PI)
-      const pos1z = b1 * Math.cos(degree_y/180*Math.PI)
-      const pos1pos = pos_add(node1pos,{x:pos1x, y:a1, z:pos1z})
-
-      const {a:a2, b:b2} = calc_side(side_c,angle_B)
-      //const {a:a2, b:b2} = calc_side(a1,degree_y)
-      const pos2x = a2 * Math.sin(degree_y/180*Math.PI)
-      const pos2z = a2 * Math.cos(degree_y/180*Math.PI)
-      const pos2pos = pos_add(node1pos,{x:pos2x, y:0, z:pos2z})
-
-      set_node1(pos1pos)
-
-      console.log(`degree_x:${degree_x} degree_y:${degree_y} angle_B:${angle_B}`)
-      //console.log({node1pos})
-      //console.log({pos1pos})
-
-      //console.log(`a:${a1} b:${b1}`)
-      //wkrotate.j4 = (deg2.y * -1) + deg1.direction
+      wkrotate.j4 = (wkpos1_deg_y)
+      wkrotate.j5 = (wkpos1_deg_x)
 
       set_rotate({...wkrotate})
     }
@@ -245,15 +233,16 @@ export default function Home() {
     <>
       <a-scene>
         <a-sky color="#E2F4FF"></a-sky>
-        <Abox nodes={nodes} box_scale={box_scale}/>
-        <a-box position={`${node1.x} ${node1.y} ${node1.z}`} scale={box_scale} color="red"></a-box>
-        <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#7BC8A4" shadow></a-plane>
+        <Abox nodes={nodes} box_scale={box_scale} box_visible={box_visible}/>
+        <a-cone position={`${node1.x} ${node1.y} ${node1.z}`} scale={box_scale} color="red" visible={box_visible}></a-cone>
+        <a-cone position={`${node2.x} ${node2.y} ${node2.z}`} scale={box_scale} color="cyan" visible={box_visible}></a-cone>
+        <a-plane position="0 0 0" rotation="-90 0 0" width="1" height="1" color="#7BC8A4" shadow></a-plane>
         <Assets/>
         <Select_Robot {...robotProps}/>
         <a-entity id="rig" position={`${c_pos.x} ${c_pos.y} ${c_pos.z}`} rotation={`${c_deg.x} ${c_deg.y} ${c_deg.z}`}>
           <a-camera id="camera" cursor="rayOrigin: mouse;" position="0 0 0"></a-camera>
         </a-entity>
-        <a-sphere position={`${target.x} ${target.y} ${target.z}`} scale="0.03 0.03 0.03" color="yellow"></a-sphere>
+        <a-sphere position={`${target.x} ${target.y} ${target.z}`} scale="0.02 0.02 0.02" color="yellow" visible={true}></a-sphere>
       </a-scene>
       <Controller {...controllerProps}/>
     </>
@@ -268,10 +257,10 @@ export default function Home() {
 }
 
 const Abox = (props)=>{
-  const {nodes,box_scale} = props
+  const {nodes,box_scale,box_visible} = props
   const coltbl = ["red","green","blue","yellow"]
   if(nodes.length > 0){
-    return nodes.map((node,idx)=><a-box key={idx} position={`${node.x} ${node.y} ${node.z}`} scale="0.01 0.01 0.01" color={coltbl[idx]}></a-box>)
+    return nodes.map((node,idx)=><a-box key={idx} position={`${node.x} ${node.y} ${node.z}`} scale={box_scale} color={coltbl[idx]} visible={true}></a-box>)
   }else{
     return null
   }
