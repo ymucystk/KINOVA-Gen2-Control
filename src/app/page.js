@@ -30,6 +30,14 @@ export default function Home() {
     return Math.sqrt((t_pos.x - s_pos.x) ** 2 + (t_pos.y - s_pos.y) ** 2 + (t_pos.z - s_pos.z) ** 2);
   }
 
+  const distance2Dx = (s_pos, t_pos)=>{
+    return Math.sqrt((t_pos.y - s_pos.y) ** 2 + (t_pos.z - s_pos.z) ** 2);
+  }
+
+  const distance2Dz = (s_pos, t_pos)=>{
+    return Math.sqrt((t_pos.x - s_pos.x) ** 2 + (t_pos.y - s_pos.y) ** 2);
+  }
+
   const pos_add = (pos1, pos2)=>{
     return {x:(pos1.x + pos2.x), y:(pos1.y + pos2.y), z:(pos1.z + pos2.z)}
   }
@@ -53,23 +61,86 @@ export default function Home() {
     return p
   }
 
+  const getPoint2Dx  = (t,s,l)=>{
+    const p = {x:0,y:0,z:0}
+    const d = distance2Dx(s,t)
+
+    const dy = (t.y-s.y)/d
+    const dz = (t.z-s.z)/d
+
+    p.y = Math.round((t.y - dy*l)*10000)/10000
+    p.z = Math.round((t.z - dz*l)*10000)/10000
+
+    return p
+  }
+
+  const getPoint2Dz  = (t,s,l)=>{
+    const p = {x:0,y:0,z:0}
+    const d = distance2Dz(s,t)
+
+    const dx = (t.x-s.x)/d
+    const dy = (t.y-s.y)/d
+
+    p.x = Math.round((t.x - dx*l)*10000)/10000
+    p.y = Math.round((t.y - dy*l)*10000)/10000
+
+    return p
+  }
+
   const FABRIK = (st,tg,nd)=>{
     const wknd = [...nd]
-    //const wknd = nd.map(()=>({x:0,y:0,z:0}))
     const len = wknd.length - 1
-    for(let i=0;i<25;i++){
-      wknd[len].x = tg.x
-      wknd[len].y = tg.y
-      wknd[len].z = tg.z
-      for(let j=1;j<=len;j++){
-        wknd[len-j] = getPoint(wknd[len-j+1],wknd[len-j],joint_length[len-j]);
+    if((tg.x - st.x) === 0 && wknd.findIndex((e)=>e.x != 0) < 0){
+      if(wknd.findIndex((e)=>e.z != 0) < 0){
+        wknd[1].z = 0.01
       }
-
-      wknd[0].x = st.x
-      wknd[0].y = st.y
-      wknd[0].z = st.z
-      for(let j=1;j<=len;j++){
-        wknd[j] = getPoint(wknd[j-1],wknd[j],joint_length[j-1]);
+      for(let i=0;i<25;i++){
+        wknd[len].x = tg.x
+        wknd[len].y = tg.y
+        wknd[len].z = tg.z
+        for(let j=1;j<=len;j++){
+          wknd[len-j] = getPoint2Dx(wknd[len-j+1],wknd[len-j],joint_length[len-j]);
+        }
+  
+        wknd[0].x = st.x
+        wknd[0].y = st.y
+        wknd[0].z = st.z
+        for(let j=1;j<=len;j++){
+          wknd[j] = getPoint2Dx(wknd[j-1],wknd[j],joint_length[j-1]);
+        }
+      }
+    }else
+    if((tg.z - st.z) === 0 && wknd.findIndex((e)=>e.z != 0) < 0){
+      for(let i=0;i<25;i++){
+        wknd[len].x = tg.x
+        wknd[len].y = tg.y
+        wknd[len].z = tg.z
+        for(let j=1;j<=len;j++){
+          wknd[len-j] = getPoint2Dz(wknd[len-j+1],wknd[len-j],joint_length[len-j]);
+        }
+  
+        wknd[0].x = st.x
+        wknd[0].y = st.y
+        wknd[0].z = st.z
+        for(let j=1;j<=len;j++){
+          wknd[j] = getPoint2Dz(wknd[j-1],wknd[j],joint_length[j-1]);
+        }
+      }
+    }else{
+      for(let i=0;i<25;i++){
+        wknd[len].x = tg.x
+        wknd[len].y = tg.y
+        wknd[len].z = tg.z
+        for(let j=1;j<=len;j++){
+          wknd[len-j] = getPoint(wknd[len-j+1],wknd[len-j],joint_length[len-j]);
+        }
+  
+        wknd[0].x = st.x
+        wknd[0].y = st.y
+        wknd[0].z = st.z
+        for(let j=1;j<=len;j++){
+          wknd[j] = getPoint(wknd[j-1],wknd[j],joint_length[j-1]);
+        }
       }
     }
     set_nodes([...wknd])
