@@ -254,11 +254,10 @@ export default function Home() {
 
       let setj4 = wkpos1_deg_y
       if((deg1.angle1 + deg1.angle2) >= 180){
-        if(setj4 === 0){
-          setj4 = 180
-        }else
-        if(setj4 === 180){
-          setj4 = 0
+        if(setj4 < 0){
+          setj4 += 180
+        }else{
+          setj4 -= 180
         }
       }
       wkrotate.j4 = (setj4)
