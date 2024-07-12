@@ -166,7 +166,7 @@ export default function Home() {
       const {x:degree_x,y:degree_y} = degree(node1pos,second_base_pos)
       const relativepos = pos_sub(nodes[3],second_base_pos)
       const {s:hankei, k:kakudo} = calc_side_2(relativepos.x,relativepos.z)
-      const relativedeg = kakudo - deg1.direction
+      const relativedeg = kakudo - degree_y
       const wkpos1x = hankei * Math.sin(relativedeg/180*Math.PI)
       const wkpos1z = hankei * Math.cos(relativedeg/180*Math.PI)
       const wkpos1 = {x:wkpos1x,y:relativepos.y,z:wkpos1z}
