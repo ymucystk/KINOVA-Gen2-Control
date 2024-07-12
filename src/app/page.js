@@ -224,8 +224,10 @@ export default function Home() {
     rotate, set_rotate, target, set_target
   }
 
+  const edit_pos = (posxyz)=>`${posxyz.x} ${posxyz.y} ${posxyz.z}`
+
   const robotProps = {
-    robotNameList, robotName, rotate, joint_pos
+    robotNameList, robotName, rotate, joint_pos, edit_pos
   }
 
   if(rendered){
@@ -233,16 +235,16 @@ export default function Home() {
     <>
       <a-scene>
         <a-sky color="#E2F4FF"></a-sky>
-        <Abox nodes={nodes} box_scale={box_scale} box_visible={box_visible}/>
-        <a-cone position={`${node1.x} ${node1.y} ${node1.z}`} scale={box_scale} color="red" visible={box_visible}></a-cone>
-        <a-cone position={`${node2.x} ${node2.y} ${node2.z}`} scale={box_scale} color="cyan" visible={box_visible}></a-cone>
+        <Abox nodes={nodes} box_scale={box_scale} box_visible={box_visible} edit_pos={edit_pos}/>
+        <a-cone position={edit_pos(node1)} scale={box_scale} color="red" visible={box_visible}></a-cone>
+        <a-cone position={edit_pos(node2)} scale={box_scale} color="cyan" visible={box_visible}></a-cone>
         <a-plane position="0 0 0" rotation="-90 0 0" width="1" height="1" color="#7BC8A4" shadow></a-plane>
         <Assets/>
         <Select_Robot {...robotProps}/>
-        <a-entity id="rig" position={`${c_pos.x} ${c_pos.y} ${c_pos.z}`} rotation={`${c_deg.x} ${c_deg.y} ${c_deg.z}`}>
+        <a-entity id="rig" position={edit_pos(c_pos)} rotation={`${c_deg.x} ${c_deg.y} ${c_deg.z}`}>
           <a-camera id="camera" cursor="rayOrigin: mouse;" position="0 0 0"></a-camera>
         </a-entity>
-        <a-sphere position={`${target.x} ${target.y} ${target.z}`} scale="0.02 0.02 0.02" color="yellow" visible={true}></a-sphere>
+        <a-sphere position={edit_pos(target)} scale="0.02 0.02 0.02" color="yellow" visible={true}></a-sphere>
       </a-scene>
       <Controller {...controllerProps}/>
     </>
@@ -257,10 +259,10 @@ export default function Home() {
 }
 
 const Abox = (props)=>{
-  const {nodes,box_scale,box_visible} = props
+  const {nodes,box_scale,box_visible,edit_pos} = props
   const coltbl = ["red","green","blue","yellow"]
   if(nodes.length > 0){
-    return nodes.map((node,idx)=><a-box key={idx} position={`${node.x} ${node.y} ${node.z}`} scale={box_scale} color={coltbl[idx]} visible={true}></a-box>)
+    return nodes.map((node,idx)=><a-box key={idx} position={edit_pos(node)} scale={box_scale} color={coltbl[idx]} visible={true}></a-box>)
   }else{
     return null
   }
@@ -284,15 +286,15 @@ const Assets = ()=>{
 }
 
 const KINOVA_Gen2 = (props)=>{
-  const {visible, rotate, joint_pos} = props
+  const {visible, rotate, joint_pos, edit_pos} = props
   return (<>{visible?
-    <a-entity robot-click gltf-model="#KINOVA_BASE" position={`${joint_pos.base.x} ${joint_pos.base.y} ${joint_pos.base.z}`} rotation="0 0 0" visible={visible}>
-      <a-entity gltf-model="#KINOVA_J1" position={`${joint_pos.j1.x} ${joint_pos.j1.y} ${joint_pos.j1.z}`} rotation={`0 ${rotate.j1} 0`}>
-        <a-entity gltf-model="#KINOVA_J2" position={`${joint_pos.j2.x} ${joint_pos.j2.y} ${joint_pos.j2.z}`} rotation={`${rotate.j2} 0 0`}>
-          <a-entity gltf-model="#KINOVA_J3" position={`${joint_pos.j3.x} ${joint_pos.j3.y} ${joint_pos.j3.z}`} rotation={`${rotate.j3} 0 0`}>
-            <a-entity gltf-model="#KINOVA_J4" position={`${joint_pos.j4.x} ${joint_pos.j4.y} ${joint_pos.j4.z}`} rotation={`0 ${rotate.j4} 0`}>
-              <a-entity gltf-model="#KINOVA_J5" position={`${joint_pos.j5.x} ${joint_pos.j5.y} ${joint_pos.j5.z}`} rotation={`${rotate.j5} 0 0`}>
-                <a-entity gltf-model="#KINOVA_J6" position={`${joint_pos.j6.x} ${joint_pos.j6.y} ${joint_pos.j6.z}`} rotation={`0 ${rotate.j6} 0`}>
+    <a-entity robot-click gltf-model="#KINOVA_BASE" position={edit_pos(joint_pos.base)} rotation="0 0 0" visible={visible}>
+      <a-entity gltf-model="#KINOVA_J1" position={edit_pos(joint_pos.j1)} rotation={`0 ${rotate.j1} 0`}>
+        <a-entity gltf-model="#KINOVA_J2" position={edit_pos(joint_pos.j2)} rotation={`${rotate.j2} 0 0`}>
+          <a-entity gltf-model="#KINOVA_J3" position={edit_pos(joint_pos.j3)} rotation={`${rotate.j3} 0 0`}>
+            <a-entity gltf-model="#KINOVA_J4" position={edit_pos(joint_pos.j4)} rotation={`0 ${rotate.j4} 0`}>
+              <a-entity gltf-model="#KINOVA_J5" position={edit_pos(joint_pos.j5)} rotation={`${rotate.j5} 0 0`}>
+                <a-entity gltf-model="#KINOVA_J6" position={edit_pos(joint_pos.j6)} rotation={`0 ${rotate.j6} 0`}>
                   <a-entity gltf-model="#KINOVA_finger1" position="-0.03 0.1145 0.003" rotation="8 -10 0" animation="property: rotation; from: 8 -10 0; to: 8 -10 -40; loop: true; dur:1000; easing:linear"></a-entity>
                   <a-entity gltf-model="#KINOVA_finger2" position="0.025 0.1145 -0.023" rotation="-1 7 0" animation="property: rotation; from: -1 7 0; to: -1 7 40; loop: true; dur:1000; easing:linear"></a-entity>
                   <a-entity gltf-model="#KINOVA_finger2" position="0.025 0.1145 0.022" rotation="2 -15 0" animation="property: rotation; from: 2 -15 0; to: 2 -15 40; loop: true; dur:1000; easing:linear"></a-entity>
