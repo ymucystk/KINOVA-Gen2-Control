@@ -17,6 +17,8 @@ export default function Home() {
   const [node2,set_node2] = React.useState({x:0,y:0,z:0})
   const [box_scale,set_box_scale] = React.useState("0.03 0.03 0.03")
   const [box_visible,set_box_visible] = React.useState(true)
+  const [wrist_rotate,set_wrist_rotate] = React.useState({x:0,y:0,z:0})
+  const [fabrik_mode,set_fabrik_mode] = React.useState(false)
   let registered = false
 
   const joint_pos = {
@@ -220,14 +222,14 @@ export default function Home() {
     return {s:syahen, k:kakudo}
   }
 
+  const calc_side_3 = (hen_a, hen_b, kakudo)=>{
+    return Math.sqrt(hen_a ** 2 + hen_b ** 2 - (2 * hen_a * hen_b * Math.cos(kakudo/180*Math.PI)))
+  }
+
   React.useEffect(() => {
-    if(nodes.length > 0){
+    if(nodes.length > 0 && fabrik_mode){
       const wkrotate = {...rotate}
       const deg1 = degree_base(nodes[0],nodes[2],joint_length[0],joint_length[1])
-      wkrotate.j1 = deg1.direction
-      wkrotate.j2 = deg1.angle1
-      wkrotate.j3 = deg1.angle2
-
       const {a:node1y, b:node1r} = calc_side_1(joint_length[0],deg1.angle1)
       const node1x = Math.abs(deg1.direction)===180 ? 0:(node1r * Math.sin(deg1.direction/180*Math.PI))
       const node1z = Math.abs(deg1.direction)===90  ? 0:(node1r * Math.cos(deg1.direction/180*Math.PI))
@@ -260,12 +262,94 @@ export default function Home() {
           setj4 -= 180
         }
       }
+      wkrotate.j1 = deg1.direction
+      wkrotate.j2 = deg1.angle1
+      wkrotate.j3 = deg1.angle2
       wkrotate.j4 = (setj4)
       wkrotate.j5 = (wkpos1_deg_x)
+      wkrotate.j6 = wrist_rotate.z
 
       set_rotate({...wkrotate})
     }
-  },[nodes])
+  },[nodes,wrist_rotate,fabrik_mode])
+
+  React.useEffect(() => {
+    if(nodes.length > 0 && !fabrik_mode){
+      const wkrotate = {...rotate}
+      const deg1 = degree_base(nodes[0],nodes[2],joint_length[0],joint_length[1])
+
+      const {x:deg_n3_x,y:deg_n3_y} = degree(nodes[0],nodes[3])
+      const {a:teihen, b:takasa} = calc_side_1(joint_length[2],wrist_rotate.x)
+      const node2pos = {...nodes[3]}
+      const {a:teihen2, b:takasa2} = calc_side_1(teihen,deg_n3_y)
+      node2pos.x = nodes[3].x - takasa2
+      node2pos.y = node2pos.y + (-takasa)
+      node2pos.z = nodes[3].z - teihen2
+
+      const side_c = distance({x:0,y:node2pos.y,z:0},node2pos) + teihen
+      const side_b = teihen
+      const {a:wk_teihen, b:wk_takasa} = calc_side_1(side_b,wrist_rotate.y)
+
+      let angle_Ad = Math.acos(wk_takasa / side_c)*180/Math.PI
+      if(isNaN(angle_Ad)) angle_Ad = 0
+
+      const {b:wk_takasa2} = calc_side_1(side_c,angle_Ad)
+      const side_a = wk_takasa2 - wk_teihen
+
+      let angle_A = Math.acos((side_b ** 2 + side_c ** 2 - side_a ** 2) / (2 * side_b * side_c))*180/Math.PI
+      if(isNaN(angle_A)) angle_A = 0
+      angle_A = angle_A * (wrist_rotate.y < 0 ? -1 : 1)
+
+      const {a:teihen3, b:takasa3} = calc_side_1(teihen,(deg_n3_y + angle_A))
+      node2pos.x = nodes[3].x - takasa3
+      node2pos.z = nodes[3].z - teihen3
+
+      set_node1(node2pos)
+
+
+      const {a:node1y, b:node1r} = calc_side_1(joint_length[0],deg1.angle1)
+      const node1x = Math.abs(deg1.direction)===180 ? 0:(node1r * Math.sin(deg1.direction/180*Math.PI))
+      const node1z = Math.abs(deg1.direction)===90  ? 0:(node1r * Math.cos(deg1.direction/180*Math.PI))
+      const node1pos = pos_add(joint_pos.j2,{x:node1x, y:node1y, z:node1z})
+
+      const second_base_pos = nodes[2]
+      const {x:degree_x,y:degree_y} = degree(node1pos,second_base_pos)
+      const relativepos = pos_sub(nodes[3],second_base_pos)
+      const {s:hankei, k:kakudo} = calc_side_2(relativepos.x,relativepos.z)
+      const relativedeg = kakudo - degree_y
+      const wkpos1x = hankei * Math.sin(relativedeg/180*Math.PI)
+      const wkpos1z = hankei * Math.cos(relativedeg/180*Math.PI)
+      const wkpos1 = {x:wkpos1x,y:relativepos.y,z:wkpos1z}
+
+      const {s:hankei2, k:kakudo2} = calc_side_2(wkpos1z,relativepos.y)
+      const relativedeg2 = kakudo2 - degree_x
+      const wkpos2z = hankei2 * Math.sin(relativedeg2/180*Math.PI)
+      const wkpos2y = hankei2 * Math.cos(relativedeg2/180*Math.PI)
+
+      const wkpos2 = {x:wkpos1x,y:wkpos2y,z:wkpos2z}
+      const {x:wkpos1_deg_x,y:wkpos1_deg_y} = degree({x:0,y:0,z:0},wkpos2)
+      //set_node1(pos_add(second_base_pos,wkpos1))
+      set_node2(pos_add(second_base_pos,wkpos2))
+
+      let setj4 = wkpos1_deg_y
+      if((deg1.angle1 + deg1.angle2) >= 180){
+        if(setj4 < 0){
+          setj4 += 180
+        }else{
+          setj4 -= 180
+        }
+      }
+
+      wkrotate.j1 = deg1.direction
+      wkrotate.j2 = deg1.angle1
+      wkrotate.j3 = deg1.angle2
+      wkrotate.j4 = (setj4)
+      wkrotate.j5 = (wkpos1_deg_x)
+      wkrotate.j6 = wrist_rotate.z
+
+      set_rotate({...wkrotate})
+    }
+  },[nodes,wrist_rotate,fabrik_mode])
 
   const robotChange = ()=>{
     const get = (robotName)=>{
@@ -300,7 +384,9 @@ export default function Home() {
 
   const controllerProps = {
     robotName, robotNameList, set_robotName,
-    rotate, set_rotate, target, set_target
+    rotate, set_rotate, target, set_target,
+    wrist_rotate,set_wrist_rotate,
+    fabrik_mode,set_fabrik_mode
   }
 
   const edit_pos = (posxyz)=>`${posxyz.x} ${posxyz.y} ${posxyz.z}`

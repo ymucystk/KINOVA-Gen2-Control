@@ -3,12 +3,9 @@ import * as React from 'react'
 import "./controller.css";
 
 export default function Controller(props) {
-  const {robotNameList, robotName} = props
-  const {rotate, target} = props
-
-  const set_robotName = (e)=>{
-    props.set_robotName(e.target.value)
-  }
+  const {rotate, target, wrist_rotate, fabrik_mode} = props
+  //const {wrist_rotate,set_wrist_rotate} = props
+  //fabrik_mode,set_fabrik_mode
 
   const set_j1_rotate = (e)=>{
     let value = e.target.value
@@ -71,14 +68,27 @@ export default function Controller(props) {
     props.set_target({...target,z:value})
   }
 
+  const set_wrist_rotate_x = (e)=>{
+    let value = e.target.value
+    props.set_wrist_rotate({...wrist_rotate,x:value})
+  }
+  const set_wrist_rotate_y = (e)=>{
+    let value = e.target.value
+    props.set_wrist_rotate({...wrist_rotate,y:value})
+  }
+  const set_wrist_rotate_z = (e)=>{
+    let value = e.target.value
+    props.set_wrist_rotate({...wrist_rotate,z:value})
+  }
+
+  const set_fabrik_mode = (e)=>{
+    let value = e.target.checked
+    props.set_fabrik_mode(value)
+  }
+
   return (
     <>
       <div className="controller" >
-        {/*<div className="mb-2">
-          <select className="form-select" onChange={set_robotName} value={robotName}>
-            {robotNameList.map((name,idx)=><option key={idx} value={name}>{name}</option>)}
-          </select>
-        </div>*/}
         <div className="row mb-2">
           <div className="col-md-4"><label htmlFor="j1_rotate_number" className="form-label"><span className="form-control-plaintext">J1 Deg</span></label></div>
           <div className="col-md-8"><input type="number" className="form-control" id="j1_rotate_number" value={rotate.j1} onChange={set_j1_rotate} min={-180} max={180}/></div>
@@ -117,6 +127,24 @@ export default function Controller(props) {
         <div className="row mb-2">
           <div className="col-md-4"><label htmlFor="target_z_number" className="form-label"><span className="form-control-plaintext">target z</span></label></div>
           <div className="col-md-8"><input type="number" className="form-control" id="target_z_number" value={target.z} onChange={set_target_z} step={0.01} min={-10} max={10}/></div>
+        </div>
+        <div className="row mb-4">
+        </div>
+        <div className="row mb-4">
+          <div className="col-md-4"><label htmlFor="fabrik_mode_check" className="form-check-label"><span className="form-control-plaintext">fabrikmode</span></label></div>
+          <div className="col-md-8"><input type="checkbox" className="form-check-input" id="fabrik_mode_check" value={fabrik_mode} onChange={set_fabrik_mode}/></div>
+        </div>
+        <div className="row mb-2">
+          <div className="col-md-4"><label htmlFor="wrist_rotate_x_number" className="form-label"><span className="form-control-plaintext">wrist x</span></label></div>
+          <div className="col-md-8"><input type="number" className="form-control" id="wrist_rotate_x_number" value={wrist_rotate.x} onChange={set_wrist_rotate_x} min={-180} max={180}/></div>
+        </div>
+        <div className="row mb-2">
+          <div className="col-md-4"><label htmlFor="wrist_rotate_y_number" className="form-label"><span className="form-control-plaintext">wrist y</span></label></div>
+          <div className="col-md-8"><input type="number" className="form-control" id="wrist_rotate_y_number" value={wrist_rotate.y} onChange={set_wrist_rotate_y} min={-180} max={180}/></div>
+        </div>
+        <div className="row mb-2">
+          <div className="col-md-4"><label htmlFor="wrist_rotate_z_number" className="form-label"><span className="form-control-plaintext">wrist z</span></label></div>
+          <div className="col-md-8"><input type="number" className="form-control" id="wrist_rotate_z_number" value={wrist_rotate.z} onChange={set_wrist_rotate_z} min={-180} max={180}/></div>
         </div>
       </div>
     </>
