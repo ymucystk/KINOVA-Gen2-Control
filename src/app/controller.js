@@ -8,7 +8,7 @@ export default function Controller(props) {
   //fabrik_mode,set_fabrik_mode
 
   const set_j1_rotate = (e)=>{
-    let value = e.target.value
+    let value = Number.parseFloat(e.target.value)
     if(Math.abs(value)===180){
       value = value * -1
     }
@@ -16,7 +16,7 @@ export default function Controller(props) {
   }
 
   const set_j2_rotate = (e)=>{
-    let value = e.target.value
+    let value = Number.parseFloat(e.target.value)
     if(Math.abs(value)===180){
       value = value * -1
     }
@@ -24,7 +24,7 @@ export default function Controller(props) {
   }
 
   const set_j3_rotate = (e)=>{
-    let value = e.target.value
+    let value = Number.parseFloat(e.target.value)
     if(Math.abs(value)===180){
       value = value * -1
     }
@@ -32,7 +32,7 @@ export default function Controller(props) {
   }
 
   const set_j4_rotate = (e)=>{
-    let value = e.target.value
+    let value = Number.parseFloat(e.target.value)
     if(Math.abs(value)===180){
       value = value * -1
     }
@@ -40,7 +40,7 @@ export default function Controller(props) {
   }
 
   const set_j5_rotate = (e)=>{
-    let value = e.target.value
+    let value = Number.parseFloat(e.target.value)
     if(Math.abs(value)===180){
       value = value * -1
     }
@@ -48,7 +48,7 @@ export default function Controller(props) {
   }
 
   const set_j6_rotate = (e)=>{
-    let value = e.target.value
+    let value = Number.parseFloat(e.target.value)
     if(Math.abs(value)===180){
       value = value * -1
     }
@@ -56,33 +56,33 @@ export default function Controller(props) {
   }
 
   const set_target_x = (e)=>{
-    let value = e.target.value
+    const value = Number.parseFloat(e.target.value)
     props.set_target({...target,x:value})
   }
   const set_target_y = (e)=>{
-    let value = e.target.value
+    const value = Number.parseFloat(e.target.value)
     props.set_target({...target,y:value})
   }
   const set_target_z = (e)=>{
-    let value = e.target.value
+    const value = Number.parseFloat(e.target.value)
     props.set_target({...target,z:value})
   }
 
   const set_wrist_rotate_x = (e)=>{
-    let value = e.target.value
+    const value = Number.parseFloat(e.target.value)
     props.set_wrist_rotate({...wrist_rotate,x:value})
   }
   const set_wrist_rotate_y = (e)=>{
-    let value = e.target.value
+    const value = Number.parseFloat(e.target.value)
     props.set_wrist_rotate({...wrist_rotate,y:value})
   }
   const set_wrist_rotate_z = (e)=>{
-    let value = e.target.value
+    const value = Number.parseFloat(e.target.value)
     props.set_wrist_rotate({...wrist_rotate,z:value})
   }
 
   const set_fabrik_mode = (e)=>{
-    let value = e.target.checked
+    const value = e.target.checked
     props.set_fabrik_mode(value)
   }
 
@@ -140,7 +140,7 @@ export default function Controller(props) {
         </div>
         <div className="row mb-2">
           <div className="col-md-4"><label htmlFor="wrist_rotate_y_number" className="form-label"><span className="form-control-plaintext">wrist y</span></label></div>
-          <div className="col-md-8"><input type="number" className="form-control" id="wrist_rotate_y_number" value={wrist_rotate.y} onChange={set_wrist_rotate_y} min={-180} max={180}/></div>
+          <div className="col-md-8"><input type="number" className="form-control" id="wrist_rotate_y_number" value={wrist_rotate.y} onChange={set_wrist_rotate_y} min={-179} max={179}/></div>
         </div>
         <div className="row mb-2">
           <div className="col-md-4"><label htmlFor="wrist_rotate_z_number" className="form-label"><span className="form-control-plaintext">wrist z</span></label></div>

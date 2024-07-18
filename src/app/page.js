@@ -148,6 +148,60 @@ export default function Home() {
     set_nodes([...wknd])
   }
 
+  const WRIST_IK = (st,tg,nd2)=>{
+    const wknd2 = [...nd2]
+
+    let wl_node2pos = wknd2[2]
+    let wk_node3pos = wknd2[3]
+    const wkdistance2 = joint_length[0] + joint_length[1]
+    let wkdistance3 = Math.min(wkdistance2 + joint_length[2], distance(st,tg))
+    let wk_0_2_distance_diff = -1
+    const {x:degree_x,y:degree_y} = degree(st,tg)
+
+    do{
+      const {a:wk_y, b:radius} = calc_side_1(wkdistance3,degree_x)
+      const {a:wk_z, b:wk_x} = calc_side_1(radius,degree_y)
+      wk_node3pos = pos_add(st,{x:wk_x,y:wk_y,z:wk_z})
+
+      const {a:teihen, b:takasa} = calc_side_1(joint_length[2],wrist_rotate.x)
+      wl_node2pos = {...wk_node3pos}
+      const {a:teihen2, b:takasa2} = calc_side_1(teihen,degree_y)
+      wl_node2pos.x = wk_node3pos.x - takasa2
+      wl_node2pos.y = wl_node2pos.y + (-takasa)
+      wl_node2pos.z = wk_node3pos.z - teihen2
+
+      const side_c = distance({x:0,y:wl_node2pos.y,z:0},wl_node2pos) + teihen
+      const side_b = teihen
+      const {a:wk_teihen, b:wk_takasa} = calc_side_1(side_b,wrist_rotate.y)
+
+      let angle_Ad = Math.acos(wk_takasa / side_c)*180/Math.PI
+      if(isNaN(angle_Ad)) angle_Ad = 0
+
+      const {b:wk_takasa2} = calc_side_1(side_c,angle_Ad)
+      const side_a = wk_takasa2 - wk_teihen
+
+      let angle_A = Math.acos((side_b ** 2 + side_c ** 2 - side_a ** 2) / (2 * side_b * side_c))*180/Math.PI
+      if(isNaN(angle_A)) angle_A = 0
+      angle_A = angle_A * (wrist_rotate.y < 0 ? -1 : 1)
+
+      const {a:teihen3, b:takasa3} = calc_side_1(teihen,(degree_y + angle_A))
+      wl_node2pos.x = wk_node3pos.x - takasa3
+      wl_node2pos.z = wk_node3pos.z - teihen3
+
+      wk_0_2_distance_diff = wkdistance2 - distance(st,wl_node2pos)
+      wkdistance3 = wkdistance3 + wk_0_2_distance_diff
+    }while(wk_0_2_distance_diff < 0)
+
+    set_node1(wk_node3pos)
+    set_node2(wl_node2pos)
+
+    wknd2[1] = wknd2[0]
+    wknd2[2] = wl_node2pos
+    wknd2[3] = wk_node3pos
+
+    set_nodes([...wknd2])
+  }
+
   React.useEffect(() => {
     const setNode = []
     setNode.push(pos_add(joint_pos.j1, joint_pos.j2))
@@ -168,10 +222,13 @@ export default function Home() {
   },[])
 
   React.useEffect(() => {
-    if(nodes.length > 0){
+    if(nodes.length > 0 && fabrik_mode){
       FABRIK(source,target,nodes)
     }
-  },[target])
+    if(nodes.length > 0 && !fabrik_mode){
+      WRIST_IK(source,target,nodes)
+    }
+  },[target,wrist_rotate])
 
   const degree_base = (s_pos, t_pos, side_a, side_b)=>{
     const side_c = distance(s_pos, t_pos)
@@ -227,7 +284,7 @@ export default function Home() {
   }
 
   React.useEffect(() => {
-    if(nodes.length > 0 && fabrik_mode){
+    if(nodes.length > 0){
       const wkrotate = {...rotate}
       const deg1 = degree_base(nodes[0],nodes[2],joint_length[0],joint_length[1])
       const {a:node1y, b:node1r} = calc_side_1(joint_length[0],deg1.angle1)
@@ -262,84 +319,6 @@ export default function Home() {
           setj4 -= 180
         }
       }
-      wkrotate.j1 = deg1.direction
-      wkrotate.j2 = deg1.angle1
-      wkrotate.j3 = deg1.angle2
-      wkrotate.j4 = (setj4)
-      wkrotate.j5 = (wkpos1_deg_x)
-      wkrotate.j6 = wrist_rotate.z
-
-      set_rotate({...wkrotate})
-    }
-  },[nodes,wrist_rotate,fabrik_mode])
-
-  React.useEffect(() => {
-    if(nodes.length > 0 && !fabrik_mode){
-      const wkrotate = {...rotate}
-      const deg1 = degree_base(nodes[0],nodes[2],joint_length[0],joint_length[1])
-
-      const {x:deg_n3_x,y:deg_n3_y} = degree(nodes[0],nodes[3])
-      const {a:teihen, b:takasa} = calc_side_1(joint_length[2],wrist_rotate.x)
-      const node2pos = {...nodes[3]}
-      const {a:teihen2, b:takasa2} = calc_side_1(teihen,deg_n3_y)
-      node2pos.x = nodes[3].x - takasa2
-      node2pos.y = node2pos.y + (-takasa)
-      node2pos.z = nodes[3].z - teihen2
-
-      const side_c = distance({x:0,y:node2pos.y,z:0},node2pos) + teihen
-      const side_b = teihen
-      const {a:wk_teihen, b:wk_takasa} = calc_side_1(side_b,wrist_rotate.y)
-
-      let angle_Ad = Math.acos(wk_takasa / side_c)*180/Math.PI
-      if(isNaN(angle_Ad)) angle_Ad = 0
-
-      const {b:wk_takasa2} = calc_side_1(side_c,angle_Ad)
-      const side_a = wk_takasa2 - wk_teihen
-
-      let angle_A = Math.acos((side_b ** 2 + side_c ** 2 - side_a ** 2) / (2 * side_b * side_c))*180/Math.PI
-      if(isNaN(angle_A)) angle_A = 0
-      angle_A = angle_A * (wrist_rotate.y < 0 ? -1 : 1)
-
-      const {a:teihen3, b:takasa3} = calc_side_1(teihen,(deg_n3_y + angle_A))
-      node2pos.x = nodes[3].x - takasa3
-      node2pos.z = nodes[3].z - teihen3
-
-      set_node1(node2pos)
-
-
-      const {a:node1y, b:node1r} = calc_side_1(joint_length[0],deg1.angle1)
-      const node1x = Math.abs(deg1.direction)===180 ? 0:(node1r * Math.sin(deg1.direction/180*Math.PI))
-      const node1z = Math.abs(deg1.direction)===90  ? 0:(node1r * Math.cos(deg1.direction/180*Math.PI))
-      const node1pos = pos_add(joint_pos.j2,{x:node1x, y:node1y, z:node1z})
-
-      const second_base_pos = nodes[2]
-      const {x:degree_x,y:degree_y} = degree(node1pos,second_base_pos)
-      const relativepos = pos_sub(nodes[3],second_base_pos)
-      const {s:hankei, k:kakudo} = calc_side_2(relativepos.x,relativepos.z)
-      const relativedeg = kakudo - degree_y
-      const wkpos1x = hankei * Math.sin(relativedeg/180*Math.PI)
-      const wkpos1z = hankei * Math.cos(relativedeg/180*Math.PI)
-      const wkpos1 = {x:wkpos1x,y:relativepos.y,z:wkpos1z}
-
-      const {s:hankei2, k:kakudo2} = calc_side_2(wkpos1z,relativepos.y)
-      const relativedeg2 = kakudo2 - degree_x
-      const wkpos2z = hankei2 * Math.sin(relativedeg2/180*Math.PI)
-      const wkpos2y = hankei2 * Math.cos(relativedeg2/180*Math.PI)
-
-      const wkpos2 = {x:wkpos1x,y:wkpos2y,z:wkpos2z}
-      const {x:wkpos1_deg_x,y:wkpos1_deg_y} = degree({x:0,y:0,z:0},wkpos2)
-      //set_node1(pos_add(second_base_pos,wkpos1))
-      set_node2(pos_add(second_base_pos,wkpos2))
-
-      let setj4 = wkpos1_deg_y
-      if((deg1.angle1 + deg1.angle2) >= 180){
-        if(setj4 < 0){
-          setj4 += 180
-        }else{
-          setj4 -= 180
-        }
-      }
-
       wkrotate.j1 = deg1.direction
       wkrotate.j2 = deg1.angle1
       wkrotate.j3 = deg1.angle2
@@ -395,12 +374,16 @@ export default function Home() {
     robotNameList, robotName, rotate, joint_pos, edit_pos
   }
 
+  const aboxprops = {
+    nodes, box_scale, box_visible, edit_pos
+  }
+
   if(rendered){
     return (
     <>
       <a-scene>
         <a-sky color="#E2F4FF"></a-sky>
-        <Abox nodes={nodes} box_scale={box_scale} box_visible={box_visible} edit_pos={edit_pos}/>
+        <Abox {...aboxprops}/>
         <a-cone position={edit_pos(node1)} scale={box_scale} color="red" visible={box_visible}></a-cone>
         <a-cone position={edit_pos(node2)} scale={box_scale} color="cyan" visible={box_visible}></a-cone>
         <a-plane position="0 0 0" rotation="-90 0 0" width="1" height="1" color="#7BC8A4" shadow></a-plane>
@@ -427,7 +410,7 @@ const Abox = (props)=>{
   const {nodes,box_scale,box_visible,edit_pos} = props
   const coltbl = ["red","green","blue","yellow"]
   if(nodes.length > 0){
-    return nodes.map((node,idx)=><a-box key={idx} position={edit_pos(node)} scale={box_scale} color={coltbl[idx]} visible={true}></a-box>)
+    return nodes.map((node,idx)=><a-box key={idx} position={edit_pos(node)} scale={box_scale} color={coltbl[idx]} visible={box_visible}></a-box>)
   }else{
     return null
   }
