@@ -151,7 +151,7 @@ export default function Home() {
   const WRIST_IK = (st,tg,nd2)=>{
     const wknd2 = [...nd2]
 
-    let wl_node2pos = wknd2[2]
+    let wk_node2pos = wknd2[2]
     let wk_node3pos = wknd2[3]
     const wkdistance2 = joint_length[0] + joint_length[1]
     let wkdistance3 = Math.min(wkdistance2 + joint_length[2], distance(st,tg))
@@ -164,13 +164,13 @@ export default function Home() {
       wk_node3pos = pos_add(st,{x:wk_x,y:wk_y,z:wk_z})
 
       const {a:teihen, b:takasa} = calc_side_1(joint_length[2],wrist_rotate.x)
-      wl_node2pos = {...wk_node3pos}
+      wk_node2pos = {...wk_node3pos}
       const {a:teihen2, b:takasa2} = calc_side_1(teihen,degree_y)
-      wl_node2pos.x = wk_node3pos.x - takasa2
-      wl_node2pos.y = wl_node2pos.y + (-takasa)
-      wl_node2pos.z = wk_node3pos.z - teihen2
+      wk_node2pos.x = wk_node3pos.x - takasa2
+      wk_node2pos.y = wk_node2pos.y + (-takasa)
+      wk_node2pos.z = wk_node3pos.z - teihen2
 
-      const side_c = distance({x:0,y:wl_node2pos.y,z:0},wl_node2pos) + teihen
+      const side_c = distance({x:0,y:wk_node2pos.y,z:0},wk_node2pos) + teihen
       const side_b = teihen
       const {a:wk_teihen, b:wk_takasa} = calc_side_1(side_b,wrist_rotate.y)
 
@@ -185,18 +185,18 @@ export default function Home() {
       angle_A = angle_A * (wrist_rotate.y < 0 ? -1 : 1)
 
       const {a:teihen3, b:takasa3} = calc_side_1(teihen,(degree_y + angle_A))
-      wl_node2pos.x = wk_node3pos.x - takasa3
-      wl_node2pos.z = wk_node3pos.z - teihen3
+      wk_node2pos.x = wk_node3pos.x - takasa3
+      wk_node2pos.z = wk_node3pos.z - teihen3
 
-      wk_0_2_distance_diff = wkdistance2 - distance(st,wl_node2pos)
+      wk_0_2_distance_diff = wkdistance2 - distance(st,wk_node2pos)
       wkdistance3 = wkdistance3 + wk_0_2_distance_diff
     }while(wk_0_2_distance_diff < 0)
 
     set_node1(wk_node3pos)
-    set_node2(wl_node2pos)
+    set_node2(wk_node2pos)
 
     wknd2[1] = wknd2[0]
-    wknd2[2] = wl_node2pos
+    wknd2[2] = wk_node2pos
     wknd2[3] = wk_node3pos
 
     set_nodes([...wknd2])
