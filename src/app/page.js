@@ -153,8 +153,9 @@ export default function Home() {
 
     let wk_node2pos = wknd2[2]
     let wk_node3pos = wknd2[3]
-    const wkdistance2 = joint_length[0] + joint_length[1]
-    let wkdistance3 = Math.min(wkdistance2 + joint_length[2], distance(st,tg))
+    const wkdistance1 = joint_length[0] + joint_length[1]
+    const wkdistance2 = joint_length[2]
+    let wkdistance3 = Math.min(wkdistance1 + wkdistance2, distance(st,tg))
     let wk_0_2_distance_diff = -1
     const {x:degree_x,y:degree_y} = degree(st,tg)
 
@@ -163,7 +164,7 @@ export default function Home() {
       const {a:wk_z, b:wk_x} = calc_side_1(radius,degree_y)
       wk_node3pos = pos_add(st,{x:wk_x,y:wk_y,z:wk_z})
 
-      const {a:teihen, b:takasa} = calc_side_1(joint_length[2],wrist_rotate.x)
+      const {a:teihen, b:takasa} = calc_side_1(wkdistance2,wrist_rotate.x)
       wk_node2pos = {...wk_node3pos}
       const {a:teihen2, b:takasa2} = calc_side_1(teihen,degree_y)
       wk_node2pos.x = wk_node3pos.x - takasa2
@@ -188,7 +189,7 @@ export default function Home() {
       wk_node2pos.x = wk_node3pos.x - takasa3
       wk_node2pos.z = wk_node3pos.z - teihen3
 
-      wk_0_2_distance_diff = wkdistance2 - distance(st,wk_node2pos)
+      wk_0_2_distance_diff = wkdistance1 - distance(st,wk_node2pos)
       wkdistance3 = wkdistance3 + wk_0_2_distance_diff
     }while(wk_0_2_distance_diff < 0)
 
