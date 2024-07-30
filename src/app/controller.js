@@ -136,11 +136,11 @@ export default function Controller(props) {
         </div>
         <div className="row mb-2">
           <div className="col-md-4"><label htmlFor="wrist_rotate_x_number" className="form-label"><span className="form-control-plaintext">wrist x</span></label></div>
-          <div className="col-md-8"><input type="number" className="form-control" id="wrist_rotate_x_number" value={wrist_rotate.x} onChange={set_wrist_rotate_x} min={-180} max={180}/></div>
+          <div className="col-md-8"><input type="number" className="form-control" id="wrist_rotate_x_number" value={wrist_rotate.x} onChange={set_wrist_rotate_x} min={-179} max={180}/></div>
         </div>
         <div className="row mb-2">
           <div className="col-md-4"><label htmlFor="wrist_rotate_y_number" className="form-label"><span className="form-control-plaintext">wrist y</span></label></div>
-          <div className="col-md-8"><input type="number" className="form-control" id="wrist_rotate_y_number" value={wrist_rotate.y} onChange={set_wrist_rotate_y} min={-179} max={179}/></div>
+          <div className="col-md-8"><input type="number" className="form-control" id="wrist_rotate_y_number" value={wrist_rotate.y} onChange={set_wrist_rotate_y} min={-179} max={180}/></div>
         </div>
         <div className="row mb-2">
           <div className="col-md-4"><label htmlFor="wrist_rotate_z_number" className="form-label"><span className="form-control-plaintext">wrist z</span></label></div>
