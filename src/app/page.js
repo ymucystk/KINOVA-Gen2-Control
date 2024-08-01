@@ -17,8 +17,11 @@ export default function Home() {
   const [node2,set_node2] = React.useState({x:0,y:0,z:0})
   const [box_scale,set_box_scale] = React.useState("0.03 0.03 0.03")
   const [box_visible,set_box_visible] = React.useState(false)
-  const [wrist_rotate,set_wrist_rotate] = React.useState({x:0,y:0,z:0})
+  const [wrist_rotate,set_wrist_rotate] = React.useState({x:0,y:0,z:0,w:0})
   const [fabrik_mode,set_fabrik_mode] = React.useState(false)
+  const [marker1,set_marker1] = React.useState({x:0,y:0,z:0})
+  const [marker2,set_marker2] = React.useState({x:0,y:0,z:0})
+  const [wrist_deg,set_wrist_deg] = React.useState({x:0,y:0})
   const [marker_1,set_marker_1] = React.useState({x:0,y:0,z:0})
   const [marker_2,set_marker_2] = React.useState({x:0,y:0,z:0})
   const [marker_3,set_marker_3] = React.useState({x:0,y:0,z:0})
@@ -169,8 +172,8 @@ export default function Home() {
       const {a:wk_z, b:wk_x} = calc_side_1(radius,deg1.y)
       wk_node3pos = pos_add(st,{x:wk_x,y:wk_y,z:wk_z})
 
-      const {a:teihen, b:takasa} = calc_side_1(wkdistance2,wrist_rotate.x)
-      const {a:teihen2, b:takasa2} = calc_side_1(takasa,wrist_rotate.y)
+      const {a:teihen, b:takasa} = calc_side_1(wkdistance2,wrist_deg.x)
+      const {a:teihen2, b:takasa2} = calc_side_1(takasa,wrist_deg.y)
 
       wk_node2pos = {...wk_node3pos}
       wk_node2pos.x = wk_node3pos.x - takasa2
@@ -198,6 +201,11 @@ export default function Home() {
   }
 
   React.useEffect(() => {
+    const wrist_deg = degree(marker1,marker2)
+    set_wrist_deg(wrist_deg)
+  },[marker1,marker2])
+
+  React.useEffect(() => {
     const setNode = []
     setNode.push(pos_add(joint_pos.j1, joint_pos.j2))
     setNode.push(pos_add(setNode[0], joint_pos.j3))
@@ -222,7 +230,7 @@ export default function Home() {
     if(nodes.length > 0 && !fabrik_mode){
       WRIST_IK(source,target,nodes)
     }
-  },[target,wrist_rotate])
+  },[target,wrist_deg.x,wrist_deg.y,wrist_deg.z])
 
   const degree_base = (s_pos, t_pos, side_a, side_b)=>{
     const side_c = distance(s_pos, t_pos)
@@ -346,7 +354,7 @@ export default function Home() {
         const wkcenterpos2 = pos_add(nodes[2],{x:wk1_x,y:wk1_y,z:wk1_z})
 
         let wknode4pos = {x:0,y:0,z:0}
-        if(wrist_rotate.x === 0){
+        if(wrist_deg.x === 0){
           if(wkdeg1.x === 0){
             wknode4pos = marker_3
           }else{
@@ -363,7 +371,7 @@ export default function Home() {
           const {a:wk3_y, b:wk_radius3} = calc_side_1(radius,wkdeg2.x)
           const {a:wk3_z, b:wk3_x} = calc_side_1(wk_radius3,wkdeg2.y)
   
-          if(Math.abs(wrist_rotate.x) === 90){
+          if(Math.abs(wrist_deg.x) === 90){
             wknode4pos = pos_add(nodes[3],{x:wk3_x,y:-wk3_y,z:wk3_z})
           }else{
             wknode4pos = pos_add(nodes[3],{x:wk3_x,y:wk3_y,z:wk3_z})
@@ -371,10 +379,9 @@ export default function Home() {
         }
 
         const deg_markerwk = degree(nodes[3],wknode4pos)
-        //console.log(`deg_markerwk: ${deg_markerwk.x},${deg_markerwk.y}`)
         set_deg_j5(deg_markerwk)
 
-        //set_node1(wkcenterpos2)
+        set_node1(wkcenterpos2)
         set_node2(wknode4pos)
       }
       set_rotate((rotate)=>({...rotate,...wkrotate}))
@@ -383,11 +390,10 @@ export default function Home() {
 
   React.useEffect(() => {
     if(nodes.length > 0 && !fabrik_mode){
-      let rotate_j6 = wrist_rotate.z
+      let rotate_j6 = wrist_rotate.w
       const radius = 0.1
 
-      const deg_marker = degree(marker_2,marker_1)
-      //console.log(`deg_marker: ${deg_marker.x},${deg_marker.y}`)
+      const deg_marker = degree(marker_1,marker_2)
 
       const {a:wk1_y, b:wk_radius1} = calc_side_1(radius,deg_marker.x)
       const {a:wk1_z, b:wk1_x} = calc_side_1(wk_radius1,deg_marker.y)
@@ -402,15 +408,23 @@ export default function Home() {
       let angle_C = Math.round((Math.acos((radius ** 2 + radius ** 2 - side_c ** 2) / (2 * radius * radius))*180/Math.PI)*10000)/10000
       if(isNaN(angle_C)) angle_C = 0
 
-      if(wrist_rotate.x < 0){
-        rotate_j6 += angle_C
+      if(wrist_deg.x < 0){
+        if((rotate.j2 + rotate.j3) > 180){
+          rotate_j6 -= angle_C
+        }else{
+          rotate_j6 += angle_C
+        }
       }else{
-        rotate_j6 -= angle_C
+        if((rotate.j2 + rotate.j3) > 180){
+          rotate_j6 += angle_C
+        }else{
+          rotate_j6 -= angle_C
+        }
       }
 
       set_rotate((rotate)=>({...rotate,j6:rotate_j6}))
     }
-  },[deg_j5,wrist_rotate.z])
+  },[deg_j5,wrist_rotate.w])
 
   const robotChange = ()=>{
     const get = (robotName)=>{
@@ -439,7 +453,44 @@ export default function Home() {
             });
           }
         });
-        AFRAME.registerComponent('marker-1', {
+        AFRAME.registerComponent('marker1', {
+          init: function () {
+            this.position = new THREE.Vector3();
+          },
+          tick: function () {
+            if (this.el.object3D.visible) {
+              let mat = this.el.object3D.matrixWorld
+              let pos = new THREE.Vector3();
+              let quaternion = new THREE.Quaternion();
+              let scale = new THREE.Vector3()
+              mat.decompose(pos, quaternion, scale)
+              if(this.position.x !== pos.x || this.position.y !== pos.y || this.position.z !== pos.z){
+                this.position = pos
+                set_marker1({x:pos.x,y:pos.y,z:pos.z})
+              }
+            }
+          }
+        });
+        AFRAME.registerComponent('marker2', {
+          init: function () {
+            this.position = new THREE.Vector3();
+          },
+          tick: function () {
+            if (this.el.object3D.visible) {
+              let mat = this.el.object3D.matrixWorld
+              let pos = new THREE.Vector3();
+              let quaternion = new THREE.Quaternion();
+              let scale = new THREE.Vector3()
+              mat.decompose(pos, quaternion, scale)
+              if(this.position.x !== pos.x || this.position.y !== pos.y || this.position.z !== pos.z){
+                this.position = pos
+                set_marker2({x:pos.x,y:pos.y,z:pos.z})
+              }
+            }
+          }
+        });
+
+        AFRAME.registerComponent('marker_1', {
           init: function () {
             this.position = new THREE.Vector3();
           },
@@ -457,7 +508,7 @@ export default function Home() {
             }
           }
         });
-        AFRAME.registerComponent('marker-2', {
+        AFRAME.registerComponent('marker_2', {
           init: function () {
             this.position = new THREE.Vector3();
           },
@@ -475,7 +526,7 @@ export default function Home() {
             }
           }
         });
-        AFRAME.registerComponent('marker-3', {
+        AFRAME.registerComponent('marker_3', {
           init: function () {
             this.position = new THREE.Vector3();
           },
@@ -507,7 +558,7 @@ export default function Home() {
   const edit_pos = (posxyz)=>`${posxyz.x} ${posxyz.y} ${posxyz.z}`
 
   const robotProps = {
-    robotNameList, robotName, rotate, joint_pos, edit_pos, wrist_rotate
+    robotNameList, robotName, rotate, joint_pos, edit_pos, wrist_rotate, wrist_deg
   }
 
   const aboxprops = {
@@ -570,7 +621,7 @@ const Assets = ()=>{
 }
 
 const KINOVA_Gen2 = (props)=>{
-  const {visible, rotate, joint_pos, edit_pos, wrist_rotate} = props
+  const {visible, rotate, joint_pos, edit_pos, wrist_rotate, wrist_deg} = props
   //const wrist_rotate_j4 = wrist_rotate.x === 0 ? 0 : wrist_rotate.y
   return (<>{visible?<>
     <a-entity robot-click gltf-model="#KINOVA_BASE" position={edit_pos(joint_pos.base)} rotation="0 0 0" visible={visible}>
@@ -579,11 +630,11 @@ const KINOVA_Gen2 = (props)=>{
           <a-entity gltf-model="#KINOVA_J3" position={edit_pos(joint_pos.j3)} rotation={`${rotate.j3} 0 0`}>
             <a-entity gltf-model="#KINOVA_J4" position={edit_pos(joint_pos.j4)} rotation={`0 ${rotate.j4} 0`}>
               <a-entity gltf-model="#KINOVA_J5" position={edit_pos(joint_pos.j5)} rotation={`${rotate.j5} 0 0`}>
-                <a-entity robot-hand gltf-model="#KINOVA_J6" position={edit_pos(joint_pos.j6)} rotation={`0 ${rotate.j6} 0`}>
+                <a-entity gltf-model="#KINOVA_J6" position={edit_pos(joint_pos.j6)} rotation={`0 ${rotate.j6} 0`}>
                   <a-entity gltf-model="#KINOVA_finger1" position="-0.03 0.1145 0.003" rotation="8 -10 0" animation="property: rotation; from: 8 -10 0; to: 8 -10 -40; loop: true; dur:1000; easing:linear"></a-entity>
                   <a-entity gltf-model="#KINOVA_finger2" position="0.025 0.1145 -0.023" rotation="-1 7 0" animation="property: rotation; from: -1 7 0; to: -1 7 40; loop: true; dur:1000; easing:linear"></a-entity>
                   <a-entity gltf-model="#KINOVA_finger2" position="0.025 0.1145 0.022" rotation="2 -15 0" animation="property: rotation; from: 2 -15 0; to: 2 -15 40; loop: true; dur:1000; easing:linear"></a-entity>
-                  <a-entity marker-3 position={`0 ${joint_pos.j7.y + joint_pos.j8.y} 0.1`}></a-entity>
+                  <a-entity marker_3 position={`0 ${joint_pos.j7.y + joint_pos.j8.y} 0.1`}></a-entity>
                   <a-cylinder color="white" radius="0.01" height="0.3" position="0 0.22 0.15" rotation="90 0 0" visible={false}></a-cylinder>
                 </a-entity>
               </a-entity>
@@ -592,11 +643,16 @@ const KINOVA_Gen2 = (props)=>{
         </a-entity>
       </a-entity>
     </a-entity>
-    <a-entity gltf-model="#KINOVA_J4" position="-0.5 0 0" rotation={`0 ${wrist_rotate.x === 0 ? 0 : wrist_rotate.y} 0`} visible={false}>
-      <a-entity gltf-model="#KINOVA_J5" position={edit_pos(joint_pos.j5)} rotation={`${wrist_rotate.x} 0 0`}>
-        <a-entity marker-1 position="0 0.1 0"></a-entity>
-        <a-entity marker-2 position="0 0.1 -0.1"></a-entity>
-        <a-entity robot-hand gltf-model="#KINOVA_J6" position={edit_pos(joint_pos.j6)} rotation={`0 ${wrist_rotate.z} 0`}>
+    <Cursor3dp pos={{x:0.3,y:0,z:0}} rot={{x:wrist_rotate.x,y:wrist_rotate.y,z:wrist_rotate.z}} visible={false}>
+      <a-entity marker1 position="0 0 0">
+        <a-entity marker2 position="0 0.2 0"></a-entity>
+      </a-entity>
+    </Cursor3dp>
+    <a-entity gltf-model="#KINOVA_J4" position="-0.5 0 0" rotation={`0 ${wrist_deg.x === 0 ? 0 : wrist_deg.y} 0`} visible={false}>
+      <a-entity gltf-model="#KINOVA_J5" position={edit_pos(joint_pos.j5)} rotation={`${wrist_deg.x} 0 0`}>
+        <a-entity marker_1 position="0 0.1 0"></a-entity>
+        <a-entity marker_2 position="0 0.1 0.1"></a-entity>
+        <a-entity gltf-model="#KINOVA_J6" position={edit_pos(joint_pos.j6)} rotation={`0 ${wrist_rotate.w} 0`}>
           <a-cylinder color="white" radius="0.01" height="0.2" position="0 0.1 0.1" rotation="90 0 0"></a-cylinder>
         </a-entity>
       </a-entity>
@@ -617,11 +673,20 @@ const Select_Robot = (props)=>{
   </>)
 }
 
+const Cursor3dp = (props) => {
+  const { pos={x:0,y:0,z:0}, rot={x:0,y:0,z:0}, len=0.2, opa=1, children, visible=false } = props;
 
+  const line_x = `start: 0 0 0; end: ${len} 0 0; color: red; opacity: ${opa};`
+  const line_y = `start: 0 0 0; end: 0 ${len} 0; color: green; opacity: ${opa};`
+  const line_z = `start: 0 0 0; end: 0 0 ${len}; color: blue; opacity: ${opa};`
 
+  return <a-entity
+      line={line_x}
+      line__1={line_y}
+      line__2={line_z}
+      position={`${pos.x} ${pos.y} ${pos.z}`}
+      rotation={`${rot.x} ${rot.y} ${rot.z}`}
+      visible={visible}
+  >{children}</a-entity>
 
-
-
-
-
-
+}
