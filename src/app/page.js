@@ -370,12 +370,7 @@ export default function Home() {
           }
           const {a:wk3_y, b:wk_radius3} = calc_side_1(radius,wkdeg2.x)
           const {a:wk3_z, b:wk3_x} = calc_side_1(wk_radius3,wkdeg2.y)
-  
-          if(Math.abs(wrist_deg.x) === 90){
-            wknode4pos = pos_add(nodes[3],{x:wk3_x,y:-wk3_y,z:wk3_z})
-          }else{
-            wknode4pos = pos_add(nodes[3],{x:wk3_x,y:wk3_y,z:wk3_z})
-          }
+          wknode4pos = pos_add(nodes[3],{x:wk3_x,y:wk3_y,z:wk3_z})
         }
 
         const deg_markerwk = degree(nodes[3],wknode4pos)
@@ -407,6 +402,7 @@ export default function Home() {
 
       let angle_C = Math.round((Math.acos((radius ** 2 + radius ** 2 - side_c ** 2) / (2 * radius * radius))*180/Math.PI)*10000)/10000
       if(isNaN(angle_C)) angle_C = 0
+      if(Math.abs(angle_C) === 180) angle_C = 0
 
       if(wrist_deg.x < 0){
         if((rotate.j2 + rotate.j3) > 180){
