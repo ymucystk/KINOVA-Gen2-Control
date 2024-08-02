@@ -18,6 +18,7 @@ export default function Home() {
   const [box_scale,set_box_scale] = React.useState("0.03 0.03 0.03")
   const [box_visible,set_box_visible] = React.useState(false)
   const [wrist_rotate,set_wrist_rotate] = React.useState({x:0,y:0,z:0,w:0})
+  const [wrist_rotate_upd,set_wrist_rotate_upd] = React.useState({x:false,y:false,z:false,w:false})
   const [fabrik_mode,set_fabrik_mode] = React.useState(false)
   const [marker1,set_marker1] = React.useState({x:0,y:0,z:0})
   const [marker2,set_marker2] = React.useState({x:0,y:0,z:0})
@@ -26,6 +27,7 @@ export default function Home() {
   const [marker_2,set_marker_2] = React.useState({x:0,y:0,z:0})
   const [marker_3,set_marker_3] = React.useState({x:0,y:0,z:0})
   const [deg_j5,set_deg_j5] = React.useState({x:0,y:0})
+  const [arm_top,set_arm_top] = React.useState({x:0,y:1,z:0})
   let registered = false
 
   const joint_pos = {
@@ -202,8 +204,40 @@ export default function Home() {
 
   React.useEffect(() => {
     const wrist_deg = degree(marker1,marker2)
-    set_wrist_deg(wrist_deg)
+    //set_wrist_deg(wrist_deg)
   },[marker1,marker2])
+
+  React.useEffect(() => {
+    const set_rotate = {x:0,y:0,z:0}
+    set_rotate.x = Math.round((Math.atan2(arm_top.z, arm_top.y)*180/Math.PI)*10000)/10000
+    set_rotate.y = Math.round((Math.atan2(arm_top.x, arm_top.z)*180/Math.PI)*10000)/10000
+    set_rotate.z = Math.round((Math.atan2(arm_top.x, arm_top.y)*180/Math.PI)*10000)/10000
+
+    set_wrist_rotate((wr)=>({...wr,...set_rotate}))
+    const wrist_deg = degree({x:0, y:0, z:0},arm_top)
+    set_wrist_deg(wrist_deg)
+  },[arm_top])
+
+  React.useEffect(() => {
+    const {s:syahen1} = calc_side_2(arm_top.y, arm_top.z)
+    const {a:wk_y, b:wk_z} = calc_side_1(syahen1, wrist_rotate.x)
+    const newpos = {x:arm_top.x, y:wk_y, z:wk_z}
+    set_arm_top(newpos)
+  },[wrist_rotate_upd.x])
+
+  React.useEffect(() => {
+    const {s:syahen1} = calc_side_2(arm_top.z, arm_top.x)
+    const {a:wk_z, b:wk_x} = calc_side_1(syahen1, wrist_rotate.y)
+    const newpos = {x:wk_x, y:arm_top.y, z:wk_z}
+    set_arm_top(newpos)
+  },[wrist_rotate_upd.y])
+
+  React.useEffect(() => {
+    const {s:syahen1} = calc_side_2(arm_top.y, arm_top.x)
+    const {a:wk_y, b:wk_x} = calc_side_1(syahen1, wrist_rotate.z)
+    const newpos = {x:wk_x, y:wk_y, z:arm_top.z}
+    set_arm_top(newpos)
+  },[wrist_rotate_upd.z])
 
   React.useEffect(() => {
     const setNode = []
@@ -230,7 +264,7 @@ export default function Home() {
     if(nodes.length > 0 && !fabrik_mode){
       WRIST_IK(source,target,nodes)
     }
-  },[target,wrist_deg.x,wrist_deg.y,wrist_deg.z])
+  },[target,wrist_deg])
 
   const degree_base = (s_pos, t_pos, side_a, side_b)=>{
     const side_c = distance(s_pos, t_pos)
@@ -420,7 +454,7 @@ export default function Home() {
 
       set_rotate((rotate)=>({...rotate,j6:rotate_j6}))
     }
-  },[deg_j5,wrist_rotate.w])
+  },[deg_j5,wrist_rotate_upd.w])
 
   const robotChange = ()=>{
     const get = (robotName)=>{
@@ -449,7 +483,7 @@ export default function Home() {
             });
           }
         });
-        AFRAME.registerComponent('marker1', {
+        AFRAME.registerComponent('_marker1', {
           init: function () {
             this.position = new THREE.Vector3();
           },
@@ -467,7 +501,7 @@ export default function Home() {
             }
           }
         });
-        AFRAME.registerComponent('marker2', {
+        AFRAME.registerComponent('_marker2', {
           init: function () {
             this.position = new THREE.Vector3();
           },
@@ -548,7 +582,8 @@ export default function Home() {
     robotName, robotNameList, set_robotName,
     rotate, set_rotate, target, set_target,
     wrist_rotate,set_wrist_rotate,
-    fabrik_mode,set_fabrik_mode
+    fabrik_mode,set_fabrik_mode,
+    set_wrist_rotate_upd
   }
 
   const edit_pos = (posxyz)=>`${posxyz.x} ${posxyz.y} ${posxyz.z}`

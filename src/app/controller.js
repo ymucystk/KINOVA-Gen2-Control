@@ -71,18 +71,22 @@ export default function Controller(props) {
   const set_wrist_rotate_x = (e)=>{
     const value = Number.parseFloat(e.target.value)
     props.set_wrist_rotate({...wrist_rotate,x:value||0})
+    props.set_wrist_rotate_upd((data)=>({...data,x:!(data.x)}))
   }
   const set_wrist_rotate_y = (e)=>{
     const value = Number.parseFloat(e.target.value)
     props.set_wrist_rotate({...wrist_rotate,y:value||0})
+    props.set_wrist_rotate_upd((data)=>({...data,y:!(data.y)}))
   }
   const set_wrist_rotate_z = (e)=>{
     const value = Number.parseFloat(e.target.value)
     props.set_wrist_rotate({...wrist_rotate,z:value||0})
+    props.set_wrist_rotate_upd((data)=>({...data,z:!(data.z)}))
   }
   const set_wrist_rotate_w = (e)=>{
     const value = Number.parseFloat(e.target.value)
     props.set_wrist_rotate({...wrist_rotate,w:value||0})
+    props.set_wrist_rotate_upd((data)=>({...data,w:!(data.w)}))
   }
 
   const set_fabrik_mode = (e)=>{
@@ -148,7 +152,7 @@ export default function Controller(props) {
         </div>
         <div className="row mb-2">
           <div className="col-md-4"><label htmlFor="wrist_rotate_z_number" className="form-label"><span className="form-control-plaintext">wrist z</span></label></div>
-          <div className="col-md-8"><input type="number" className="form-control" id="wrist_rotate_z_number" value={wrist_rotate.z} onChange={set_wrist_rotate_z} min={-180} max={180}/></div>
+          <div className="col-md-8"><input type="number" className="form-control" id="wrist_rotate_z_number" value={wrist_rotate.z} onChange={set_wrist_rotate_z} min={-179} max={180}/></div>
         </div>
         <div className="row mb-2">
           <div className="col-md-4"><label htmlFor="wrist_rotate_w_number" className="form-label"><span className="form-control-plaintext">wrist w</span></label></div>
